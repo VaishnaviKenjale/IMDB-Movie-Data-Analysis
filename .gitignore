@@ -1,162 +1,130 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
+# install pandas
+pip install pandas
 
-# C extensions
-*.so
+# Install Libraries
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
+# Import IMDB movie dataset
+df = pd.read_csv('IMDB-Movie-Data.csv')
+df
 
-# PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
+# 1. Display Top 10 Rows of The Dataset
+df.head(10)
 
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
+# 2. Check Last 10 Rows of The Dataset
+df.tail(10)
 
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
-cover/
+# 3. Find Shape of Our Dataset (Number of Rows And Number of Columns)
+rows,columns = df.shape
+print(f"The no. of rows are {rows} and columns are {columns}")
 
-# Translations
-*.mo
-*.pot
+# 4. Getting Information About Our Dataset Like Total Number Rows, Total Number of Columns, Datatypes of Each Column And Memory Requirement
+df.info()
 
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
+# 5. Check Missing Values In The Dataset
+print("Any missing values in IMDB movie dataset ? :", df.isnull().values.any())
+  # sum() method is used to find out the sum of the True values
+df.isnull().sum()
+  # Visualize missing values using seaborn
+sns.heatmap(df.isnull())
+  # missing values in percentage
+per_missing = round(df.isnull().sum() * 100 / len(df))
+per_missing
 
-# Flask stuff:
-instance/
-.webassets-cache
+# 6. Drop All The Missing Values
+df.dropna(axis=0, inplace=True)
 
-# Scrapy stuff:
-.scrapy
+# 7. Check For Duplicate Data
+dup_data = df.duplicated().any()
+print("Are there any duplicate values ? :",dup_data)
+  #To drop duplicate values
+df = df.drop_duplicates()
+df
 
-# Sphinx documentation
-docs/_build/
+# 8. Get Overall Statistics About The DataFrame
+  # Statistical data Only for numerical data
+df.describe()
 
-# PyBuilder
-.pybuilder/
-target/
+# 9. Display Title of The Movie Having Runtime >= 180 Minutes
+df['Title'][df['Runtime (Minutes)']>=180]
 
-# Jupyter Notebook
-.ipynb_checkpoints
+# 10. In Which Year There Was The Highest Average Voting?
+df.groupby('Year')['Votes'].mean().sort_values(ascending=False)
 
-# IPython
-profile_default/
-ipython_config.py
+# 11. In Which Year There Was The Highest Average Revenue?
+df.groupby('Year')['Revenue (Millions)'].mean().sort_values(ascending=False)
 
-# pyenv
-#   For a library or package, you might want to ignore these files since the code is
-#   intended to run in multiple environments; otherwise, check them in:
-# .python-version
+# 12. Find The Average Rating For Each Director
+df.groupby('Director')['Rating'].mean().sort_values()
 
-# pipenv
-#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
-#   However, in case of collaboration, if having platform-specific dependencies or dependencies
-#   having no cross-platform support, pipenv may install dependencies that don't work, or not
-#   install all needed dependencies.
-#Pipfile.lock
+# 13. Display Top 10 Lengthy Movies Title and Runtime
+df.nlargest(10, 'Runtime (Minutes)')[['Title', 'Runtime (Minutes)']].set_index('Title')
 
-# poetry
-#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-#   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
-#poetry.lock
+# 14. Display Number of Movies Per Year
+df['Year'].value_counts(ascending=True)
 
-# pdm
-#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
-#pdm.lock
-#   pdm stores project-wide configurations in .pdm.toml, but it is recommended to not include it
-#   in version control.
-#   https://pdm.fming.dev/latest/usage/project/#working-with-version-control
-.pdm.toml
-.pdm-python
-.pdm-build/
+sns.countplot(x='Year',data=df)
+plt.title("No. of movies per year")
+plt.show()
 
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
-__pypackages__/
+# 15. Find Most Popular Movie Title (Higest Revenue)
+df.nlargest(1,'Revenue (Millions)')['Title']
 
-# Celery stuff
-celerybeat-schedule
-celerybeat.pid
+# 16. Display Top 10 Highest Rated Movie Titles And its Directors
+df.nlargest(10, 'Rating')[['Title','Director','Rating']].set_index('Title')
 
-# SageMath parsed files
-*.sage.py
+# 17. Display Top 10 Highest Revenue Movie Titles
+Top10_Highest_Revenue = df.nlargest(10,'Revenue (Millions)')[['Title', 'Revenue (Millions)']].set_index('Title')
 
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
+sns.barplot(x='Revenue (Millions)', y=Top10_Highest_Revenue.index, data=Top10_Highest_Revenue)
+plt.title("Top 10 Highest Revenue Movies")
+plt.show()
 
-# Spyder project settings
-.spyderproject
-.spyproject
+# 18. Find Average Rating of Movies Year Wise
+df.groupby('Year')['Rating'].mean().sort_values(ascending=False)
 
-# Rope project settings
-.ropeproject
+# 19. Does Rating Affect The Revenue?
+sns.scatterplot(x='Rating', y='Revenue (Millions)', data=df)
+plt.title('Rating vs Revenue')
+plt.show()
 
-# mkdocs documentation
-/site
+# 20. Classify Movies Based on Ratings [Excellent, Good and Average]
+def is_rating(rating):
+    if rating >=8.0:
+        return "Excellent"
+    elif rating >=6.0:
+        return "Good"
+    else:
+        return "Average"
 
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
+df['Rating_category']=df['Rating'].apply(is_rating)
 
-# Pyre type checker
-.pyre/
+# 21. Count Number of Action Movies
+cnt = len(df[df['Genre'].str.contains('Action', case=False)]) #case=False - case insensitive
+print("The no. of action movies are :",cnt)
 
-# pytype static type analyzer
-.pytype/
+# 22. Find Unique Values From Genre
 
-# Cython debug symbols
-cython_debug/
+list1=[]
+for value in df['Genre']:
+    list1.append(value.split(','))
 
-# PyCharm
-#  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
-#  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
-#  and can be added to the global gitignore or merged into this file.  For a more nuclear
-#  option (not recommended) you can uncomment the following to ignore the entire idea folder.
-#.idea/
+unique_val=[]
+for val in one_list:
+    if val not in unique_val:
+        unique_val.append(val)
+
+print(f"Count of unique values from 'Genre' is {len(unique_val)}")
+
+# 23. How Many Films of Each Genre Were Made?
+
+one_list=[]
+for item in list1:
+    for item1 in item:
+        one_list.append(item1)
+
+#Counter module is used in collections package to count films in each 'Genre'
+from collections import Counter
+Counter(one_list)
